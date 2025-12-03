@@ -7,15 +7,19 @@
  *   const { tree, selectorMap } = await getLLMTree(page);
  */
 
-import type { Page } from 'playwright';
-import type { LLMTreeResult, GetLLMTreeOptions, RawDOMNode } from './types.js';
+import type { Page, BrowserContext } from 'playwright';
+import type { LLMTreeResult, GetLLMTreeOptions, RawDOMNode, LLMTreeWithBackendIdsResult } from './types.js';
 import { extractRawDOM } from './extract.js';
 import { filterVisibleNodes } from './visibility.js';
 import { filterByBboxPropagation, filterByPaintOrder } from './filters.js';
 import { serializeTree } from './serialize.js';
+import { resolveBackendIds, resolveSelectorFromBackendId, isBackendNodeIdValid } from './backend-ids.js';
 
 // Re-export types
-export type { LLMTreeResult, GetLLMTreeOptions, RawDOMNode, ProcessedNode, CompoundComponent, BoundingRect } from './types.js';
+export type { LLMTreeResult, GetLLMTreeOptions, RawDOMNode, ProcessedNode, CompoundComponent, BoundingRect, LLMTreeWithBackendIdsResult } from './types.js';
+
+// Re-export backend ID utilities
+export { resolveBackendIds, resolveSelectorFromBackendId, isBackendNodeIdValid } from './backend-ids.js';
 
 // Re-export utilities
 export { extractRawDOM } from './extract.js';
@@ -80,6 +84,56 @@ export async function getLLMTree(
 	const result = serializeTree(bboxFiltered, options);
 
 	return result;
+}
+
+/**
+ * Extract DOM tree and resolve backend node IDs for persistent element identification
+ *
+ * This function extends getLLMTree by also resolving CDP backendNodeIds for each
+ * interactive element. These IDs can be stored on the server and used to build
+ * selectors for elements across script invocations.
+ *
+ * @param page - Playwright Page object
+ * @param context - Playwright BrowserContext (needed for CDP session)
+ * @param options - Configuration options
+ * @returns Object containing tree string, selector map, and backend node ID map
+ *
+ * @example
+ * ```typescript
+ * import { getLLMTreeWithBackendIds } from 'dev-browser/dom';
+ *
+ * const { tree, selectorMap, backendNodeMap } = await getLLMTreeWithBackendIds(page, context);
+ *
+ * // Store backendNodeMap on server for later use
+ * // Later, use resolveSelectorFromBackendId to get selector for element 1
+ * const selector = await resolveSelectorFromBackendId(page, context, backendNodeMap.get(1)!);
+ * await page.click(selector);
+ * ```
+ */
+export async function getLLMTreeWithBackendIds(
+	page: Page,
+	context: BrowserContext,
+	options: GetLLMTreeOptions = {}
+): Promise<LLMTreeWithBackendIdsResult> {
+	// 1. Get the standard LLM tree result
+	const { tree, selectorMap } = await getLLMTree(page, options);
+
+	if (selectorMap.size === 0) {
+		return {
+			tree,
+			selectorMap,
+			backendNodeMap: new Map(),
+		};
+	}
+
+	// 2. Resolve backend node IDs using CDP
+	const backendNodeMap = await resolveBackendIds(page, context, selectorMap);
+
+	return {
+		tree,
+		selectorMap,
+		backendNodeMap,
+	};
 }
 
 /**

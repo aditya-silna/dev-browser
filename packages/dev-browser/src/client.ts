@@ -4,6 +4,8 @@ import type {
   GetPageResponse,
   ListPagesResponse,
   ServerInfoResponse,
+  GetLLMTreeResponse,
+  GetSelectorResponse,
 } from "./types";
 
 export interface DevBrowserClient {
@@ -11,6 +13,15 @@ export interface DevBrowserClient {
   list: () => Promise<string[]>;
   close: (name: string) => Promise<void>;
   disconnect: () => Promise<void>;
+  /**
+   * Get LLM-friendly DOM tree for a page
+   * Updates the server's selector map for the page
+   */
+  getLLMTree: (name: string) => Promise<GetLLMTreeResponse>;
+  /**
+   * Get CSS selector for an element by its index from the last getLLMTree call
+   */
+  getSelectorForID: (name: string, index: number) => Promise<string>;
 }
 
 export async function connect(serverUrl: string): Promise<DevBrowserClient> {
@@ -131,6 +142,31 @@ export async function connect(serverUrl: string): Promise<DevBrowserClient> {
         await browser.close();
         browser = null;
       }
+    },
+
+    async getLLMTree(name: string): Promise<GetLLMTreeResponse> {
+      const res = await fetch(`${serverUrl}/pages/${encodeURIComponent(name)}/tree`, {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to get LLM tree: ${await res.text()}`);
+      }
+
+      return (await res.json()) as GetLLMTreeResponse;
+    },
+
+    async getSelectorForID(name: string, index: number): Promise<string> {
+      const res = await fetch(
+        `${serverUrl}/pages/${encodeURIComponent(name)}/selector/${index}`
+      );
+
+      if (!res.ok) {
+        throw new Error(`Failed to get selector: ${await res.text()}`);
+      }
+
+      const data = (await res.json()) as GetSelectorResponse;
+      return data.selector;
     },
   };
 }

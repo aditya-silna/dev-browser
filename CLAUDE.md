@@ -19,9 +19,23 @@ cd packages/dev-browser && bun run build
 # Run dev mode with watch
 cd packages/dev-browser && bun run dev
 
-# Run tests
-bun test
+# Run tests (uses vitest)
+cd packages/dev-browser && bun run test
+
+# Run TypeScript check
+cd packages/dev-browser && bun x tsc --noEmit
 ```
+
+## Important: Before Completing Code Changes
+
+**Always run these checks before considering a task complete:**
+
+1. **TypeScript check**: `bun x tsc --noEmit` - Ensure no type errors
+2. **Tests**: `bun run test` - Ensure all tests pass
+
+Common TypeScript issues in this codebase:
+- Use `import type { ... }` for type-only imports (required by `verbatimModuleSyntax`)
+- Browser globals (`document`, `window`) in `page.evaluate()` callbacks need `declare const document: any;` since DOM lib is not included
 
 ## Project Architecture
 

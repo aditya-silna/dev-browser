@@ -180,6 +180,15 @@ export interface LLMTreeResult {
 }
 
 /**
+ * Result of getLLMTreeWithBackendIds extraction
+ * Extends LLMTreeResult with CDP backendNodeIds for persistent element identification
+ */
+export interface LLMTreeWithBackendIdsResult extends LLMTreeResult {
+	/** Map of interactive index to CDP backendNodeId */
+	backendNodeMap: Map<number, number>;
+}
+
+/**
  * Options for getLLMTree extraction
  */
 export interface GetLLMTreeOptions {
