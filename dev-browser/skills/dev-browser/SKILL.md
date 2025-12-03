@@ -39,13 +39,14 @@ The `tmp/` directory is created automatically when you start the server.
 Always use the package name `dev-browser/client`.
 
 ```typescript
-import { connect } from "dev-browser/client";
+import { connect, waitForPageLoad } from "dev-browser/client";
 
 const client = await connect("http://localhost:9222");
 const page = await client.page("main"); // get or create a named page
 
 // Your automation code here
 await page.goto("https://example.com");
+await waitForPageLoad(page); // Wait for page to fully load
 
 // Always evaluate state at the end
 const title = await page.title();
@@ -78,12 +79,13 @@ Follow this pattern for complex tasks:
 **Step 1: Navigate to login page**
 
 ```typescript
-import { connect } from "dev-browser/client";
+import { connect, waitForPageLoad } from "dev-browser/client";
 
 const client = await connect("http://localhost:9222");
 const page = await client.page("auth");
 
 await page.goto("https://example.com/login");
+await waitForPageLoad(page);
 
 // Check state
 const hasLoginForm = (await page.$("form#login")) !== null;
@@ -95,7 +97,7 @@ await client.disconnect();
 **Step 2: Fill credentials** (after confirming login form exists)
 
 ```typescript
-import { connect } from "dev-browser/client";
+import { connect, waitForPageLoad } from "dev-browser/client";
 
 const client = await connect("http://localhost:9222");
 const page = await client.page("auth");
@@ -105,8 +107,7 @@ await page.fill('input[name="password"]', "password123");
 await page.click('button[type="submit"]');
 
 // Wait for navigation and check state
-await page.waitForLoadState("load");
-await page.waitForTimeout(500); // Allow dynamic content to finish loading
+await waitForPageLoad(page);
 const url = page.url();
 const isLoggedIn = url.includes("/dashboard");
 console.log({ url, isLoggedIn });
@@ -158,11 +159,16 @@ await page.check('input[type="checkbox"]');
 ### Waiting
 
 ```typescript
+import { waitForPageLoad } from "dev-browser/client";
+
+// Preferred: Wait for page to fully load (checks document.readyState and network idle)
+await waitForPageLoad(page);
+
+// Wait for specific elements
 await page.waitForSelector(".results");
-await page.waitForLoadState("load");
-await page.waitForTimeout(500); // Allow dynamic content to finish loading
+
+// Wait for specific URL
 await page.waitForURL("**/success");
-await page.waitForTimeout(1000); // avoid if possible
 ```
 
 ### Extracting Data
@@ -209,12 +215,13 @@ await page.screenshot({ path: "tmp/full.png", fullPage: true });
 For a more structured, text-based view of the page, use `getLLMTree()`. This returns a human-readable representation of interactive elements on the page, making it easier to understand page structure without parsing raw HTML.
 
 ```typescript
-import { connect } from "dev-browser/client";
+import { connect, waitForPageLoad } from "dev-browser/client";
 
 const client = await connect("http://localhost:9222");
 const page = await client.page("main");
 
 await page.goto("https://news.ycombinator.com");
+await waitForPageLoad(page);
 
 // Get the LLM-friendly DOM tree
 const tree = await client.getLLMTree("main");
@@ -294,12 +301,13 @@ await client.disconnect();
 ### Example: Finding and Clicking a Link
 
 ```typescript
-import { connect } from "dev-browser/client";
+import { connect, waitForPageLoad } from "dev-browser/client";
 
 const client = await connect("http://localhost:9222");
 const page = await client.page("main");
 
 await page.goto("https://example.com");
+await waitForPageLoad(page);
 
 // Step 1: Inspect the page structure
 const tree = await client.getLLMTree("main");
@@ -312,8 +320,7 @@ const selector = await client.getSelectorForID("main", 5);
 
 // Step 3: Click using the selector
 await page.click(selector);
-await page.waitForLoadState("load");
-await page.waitForTimeout(500); // Allow dynamic content to finish loading
+await waitForPageLoad(page);
 
 console.log("Navigated to:", page.url());
 
