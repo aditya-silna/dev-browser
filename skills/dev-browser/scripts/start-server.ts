@@ -14,8 +14,8 @@ mkdirSync(tmpDir, { recursive: true });
 console.log("Creating profiles directory...");
 mkdirSync(profileDir, { recursive: true });
 
-// Install Playwright browsers if not already installed
-console.log("Checking Playwright browser installation...");
+// Install Playwright browsers if not already installed (skip if using system Chrome)
+const useSystemChromeEnv = process.env.USE_SYSTEM_CHROME === "true";
 
 function findPackageManager(): { name: string; command: string } | null {
   const managers = [
@@ -52,24 +52,29 @@ function isChromiumInstalled(): boolean {
   }
 }
 
-try {
-  if (!isChromiumInstalled()) {
-    console.log("Playwright Chromium not found. Installing (this may take a minute)...");
+if (useSystemChromeEnv) {
+  console.log("Using system Chrome (USE_SYSTEM_CHROME=true), skipping Chromium installation.");
+} else {
+  console.log("Checking Playwright browser installation...");
+  try {
+    if (!isChromiumInstalled()) {
+      console.log("Playwright Chromium not found. Installing (this may take a minute)...");
 
-    const pm = findPackageManager();
-    if (!pm) {
-      throw new Error("No package manager found (tried bun, pnpm, npm)");
+      const pm = findPackageManager();
+      if (!pm) {
+        throw new Error("No package manager found (tried bun, pnpm, npm)");
+      }
+
+      console.log(`Using ${pm.name} to install Playwright...`);
+      execSync(pm.command, { stdio: "inherit" });
+      console.log("Chromium installed successfully.");
+    } else {
+      console.log("Playwright Chromium already installed.");
     }
-
-    console.log(`Using ${pm.name} to install Playwright...`);
-    execSync(pm.command, { stdio: "inherit" });
-    console.log("Chromium installed successfully.");
-  } else {
-    console.log("Playwright Chromium already installed.");
+  } catch (error) {
+    console.error("Failed to install Playwright browsers:", error);
+    console.log("You may need to run: npx playwright install chromium");
   }
-} catch (error) {
-  console.error("Failed to install Playwright browsers:", error);
-  console.log("You may need to run: npx playwright install chromium");
 }
 
 // Check if server is already running
@@ -100,10 +105,12 @@ try {
 
 console.log("Starting dev browser server...");
 const headless = process.env.HEADLESS === "true";
+const useSystemChrome = process.env.USE_SYSTEM_CHROME === "true";
 const server = await serve({
   port: 9222,
   headless,
   profileDir,
+  useSystemChrome,
 });
 
 console.log(`Dev browser server started`);

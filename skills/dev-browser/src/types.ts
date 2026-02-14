@@ -6,6 +6,12 @@ export interface ServeOptions {
   cdpPort?: number;
   /** Directory to store persistent browser profiles (cookies, localStorage, etc.) */
   profileDir?: string;
+  /**
+   * Use system-installed Chrome instead of Playwright's bundled Chromium.
+   * Useful in sandbox environments where Playwright can't download Chromium
+   * (e.g., proxy blocks cdn.playwright.dev). Adds --no-sandbox flag.
+   */
+  useSystemChrome?: boolean;
 }
 
 export interface ViewportSize {

@@ -56,6 +56,7 @@ export async function serve(options: ServeOptions = {}): Promise<DevBrowserServe
   const headless = options.headless ?? false;
   const cdpPort = options.cdpPort ?? 9223;
   const profileDir = options.profileDir;
+  const useSystemChrome = options.useSystemChrome ?? false;
 
   // Validate port numbers
   if (port < 1 || port > 65535) {
@@ -79,10 +80,20 @@ export async function serve(options: ServeOptions = {}): Promise<DevBrowserServe
 
   console.log("Launching browser with persistent context...");
 
+  // Build launch arguments
+  const launchArgs = [`--remote-debugging-port=${cdpPort}`];
+  if (useSystemChrome) {
+    // --no-sandbox is required when using system Chrome in sandboxed environments
+    launchArgs.push("--no-sandbox");
+  }
+
   // Launch persistent context - this persists cookies, localStorage, cache, etc.
   const context: BrowserContext = await chromium.launchPersistentContext(userDataDir, {
     headless,
-    args: [`--remote-debugging-port=${cdpPort}`],
+    args: launchArgs,
+    // Use system Chrome instead of Playwright's bundled Chromium when specified.
+    // This is useful in sandbox environments where Playwright can't download Chromium.
+    ...(useSystemChrome && { channel: "chrome" }),
   });
   console.log("Browser launched with persistent profile...");
 
