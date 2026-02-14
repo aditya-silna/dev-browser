@@ -20,8 +20,8 @@ A browser automation plugin for [Claude Code](https://docs.anthropic.com/en/docs
 ### Claude Code
 
 ```
-/plugin marketplace add sawyerhood/dev-browser
-/plugin install dev-browser@sawyerhood/dev-browser
+/plugin marketplace add aditya-silna/dev-browser
+/plugin install dev-browser@aditya-silna/dev-browser
 ```
 
 Restart Claude Code after installation.
@@ -35,7 +35,7 @@ Copy the skill to your skills directory:
 SKILLS_DIR=~/.claude/skills  # or ~/.codex/skills
 
 mkdir -p $SKILLS_DIR
-git clone https://github.com/sawyerhood/dev-browser /tmp/dev-browser-skill
+git clone https://github.com/aditya-silna/dev-browser /tmp/dev-browser-skill
 cp -r /tmp/dev-browser-skill/skills/dev-browser $SKILLS_DIR/dev-browser
 rm -rf /tmp/dev-browser-skill
 ```
@@ -52,7 +52,7 @@ The Chrome extension allows Dev Browser to control your existing Chrome browser 
 
 **Installation:**
 
-1. Download `extension.zip` from the [latest release](https://github.com/sawyerhood/dev-browser/releases/latest)
+1. Download `extension.zip` from the [latest release](https://github.com/aditya-silna/dev-browser/releases/latest)
 2. Unzip the file to a permanent location (e.g., `~/.dev-browser-extension`)
 3. Open Chrome and go to `chrome://extensions`
 4. Enable "Developer mode" (toggle in top right)
